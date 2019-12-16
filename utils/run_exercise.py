@@ -80,15 +80,23 @@ class ExerciseTopo(Topo):
                 switch_links.append(link)
 
         for sw, params in switches.iteritems():
-            if "program" in params:
+            # print "-----------configing %s------------" % sw
+            if "program" in params and "grpc_port" in params:
                 switchClass = configureP4Switch(
                         sw_path=bmv2_exe,
                         json_path=params["program"],
+                        grpc_port=params["grpc_port"],
+                        device_id=params["device_id"],
                         log_console=True,
                         pcap_dump=pcap_dir)
-            else:
+            elif "grpc_port" in params:
                 # add default switch
-                switchClass = None
+                switchClass = configureP4Switch(
+                        sw_path=bmv2_exe,
+                        grpc_port=params["grpc_port"],
+                        device_id=params["device_id"],
+                        log_console=True,
+                        pcap_dump=pcap_dir)
             self.addSwitch(sw, log_file="%s/%s.log" %(log_dir, sw), cls=switchClass)
 
         for link in host_links:
@@ -190,16 +198,21 @@ class ExerciseRunner:
             initializing the object.
         """
         # Initialize mininet with the topology specified by the config
+        # print "-----------creating network-------------"
         self.create_network()
+        # print "-----------network starting-------------"
         self.net.start()
+        # print "-----------programing started-------------"
         sleep(1)
 
         # some programming that must happen after the net has started
         self.program_hosts()
+        # print "-----------programing switch-------------"
         self.program_switches()
 
         # wait for that to finish. Not sure how to do this better
-        sleep(1)
+        # print "-----------programing finished-------------"
+        sleep(2)
 
         self.do_net_cli()
         # stop right after the CLI is exited

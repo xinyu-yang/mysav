@@ -190,6 +190,17 @@ class P4InfoHelper(object):
                 ])
         return table_entry
 
+    def buildRegisterEntry(self,
+                           register_name = 'ctime',
+                           index = 0,
+                           data = '0'):
+        register_entry = p4runtime_pb2.RegisterEntry()
+        register_entry.register_id = self.get_id("registers", register_name)
+        # print "*******%s********" % register_entry.register_id
+        register_entry.index.index = index
+        register_entry.data.bitstring = data
+        return register_entry
+
     def buildMulticastGroupEntry(self, multicast_group_id, replicas):
         mc_entry = p4runtime_pb2.PacketReplicationEngineEntry()
         mc_entry.multicast_group_entry.multicast_group_id = multicast_group_id

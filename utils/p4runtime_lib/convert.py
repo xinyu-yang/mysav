@@ -70,14 +70,14 @@ def encode(x, bitwidth):
             encoded_bytes = encodeIPv4(x)
         else:
             # Assume that the string is already encoded
-            encoded_bytes = x
+            encoded_bytes = x.decode('hex')
     elif type(x) == int:
         encoded_bytes = encodeNum(x, bitwidth)
     else:
         raise Exception("Encoding objects of %r is not supported" % type(x))
-    print "encoded_bytes len:%d" % len(encoded_bytes)
-    print "byte_len:%d" % byte_len
-    print encoded_bytes
+    # print "encoded_bytes len:%d" % len(encoded_bytes)
+    # print "byte_len:%d" % byte_len
+    # print encoded_bytes
     assert(len(encoded_bytes) == byte_len)
     return encoded_bytes
 

@@ -93,6 +93,7 @@ control MyIngress(inout headers hdr,
     action setLocalPrefix() {
         meta.isLocalPrefix = true;
     }
+     //flags | | | | | |deployed|last|stub|
     action getSrcAsn(asn_t asn, bit<8> flags) {
         meta.srcAsn = asn;
         if ((flags & 0x04) != 0) {
@@ -118,7 +119,7 @@ control MyIngress(inout headers hdr,
         tmp = hdr.ip.v4.srcAddr ++ time;
         tmp = tmp ^ meta.key[4095:4048];
         hash(meta.index, HashAlgorithm.crc16, (bit<16>)0, {tmp}, (bit<16>)256);
-        meta.index = 4096 - meta.index*16;
+        meta.index = 256 - meta.index;
         // meta.MAC = meta.key[4095:4095-15]; //.................
     }
     action getKey(bit<4096> key) {
@@ -132,6 +133,8 @@ control MyIngress(inout headers hdr,
         }
     }
     action insertIpv4MAC() {
+        hdr.ip.v4.ihl = hdr.ip.v4.ihl + 2;
+        hdr.ip.v4.totalLen = hdr.ip.v4.totalLen + 8;
         hdr.ipv4Opt.setValid();
         hdr.ipv4Opt.type = IPV4OPT_TYPE;
         hdr.ipv4Opt.len = IPV4OPT_LEN;
@@ -143,6 +146,8 @@ control MyIngress(inout headers hdr,
     action verifyMAC() {
         if (meta.MAC == hdr.ipv4Opt.MAC) {
             meta.verified = true;
+            hdr.ip.v4.ihl = hdr.ip.v4.ihl - 2;
+            hdr.ip.v4.totalLen = hdr.ip.v4.totalLen - 8;
         }
     }
 
@@ -356,6 +361,7 @@ control MyIngress(inout headers hdr,
             else if(meta.isInput == true){
                 if (hdr.ipv4Opt.isValid() == true) {
                     verifyMAC();
+                    hdr.ipv4Opt.setInvalid();
                 }
                 else {
                     drop();
@@ -366,7 +372,6 @@ control MyIngress(inout headers hdr,
                     exit;
                 }
                 else {
-                    hdr.ipv4Opt.setInvalid();
                     ipv4_forward(meta.dstAddr);
                 }
             }
@@ -390,10 +395,10 @@ control MyEgress(inout headers hdr,
 
 control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
      apply {
-	update_checksum(
-	    hdr.ip.v4.isValid(),
+             update_checksum(
+	        hdr.ip.v4.isValid() && hdr.ipv4Opt.isValid() == false,
             { hdr.ip.v4.version,
-	      hdr.ip.v4.ihl,
+	          hdr.ip.v4.ihl,
               hdr.ip.v4.diffserv,
               hdr.ip.v4.totalLen,
               hdr.ip.v4.identification,
@@ -405,6 +410,29 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
               hdr.ip.v4.dstAddr },
             hdr.ip.v4.hdrChecksum,
             HashAlgorithm.csum16);
+
+            update_checksum(
+	        hdr.ipv4Opt.isValid(),
+            { hdr.ip.v4.version,
+	          hdr.ip.v4.ihl,
+              hdr.ip.v4.diffserv,
+              hdr.ip.v4.totalLen,
+              hdr.ip.v4.identification,
+              hdr.ip.v4.flags,
+              hdr.ip.v4.fragOffset,
+              hdr.ip.v4.ttl,
+              hdr.ip.v4.protocol,
+              hdr.ip.v4.srcAddr,
+              hdr.ip.v4.dstAddr,
+              hdr.ipv4Opt.type,
+              hdr.ipv4Opt.len,
+              hdr.ipv4Opt.timestamp,
+              hdr.ipv4Opt.MAC,
+              hdr.ipv4Opt.nop,
+              hdr.ipv4Opt.eop},
+            hdr.ip.v4.hdrChecksum,
+            HashAlgorithm.csum16);
+
     }
 }
 

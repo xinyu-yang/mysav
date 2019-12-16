@@ -49,7 +49,7 @@
       {
         "table": "MyIngress.switchEgressAsn_exact",
         "match": {
-          "standard_metadata.egressPort": [1]
+          "meta.egressPort": [1]
         },
         "action_name": "MyIngress.setEgressAsn",
         "action_params": {
@@ -59,7 +59,7 @@
       {
         "table": "MyIngress.switchEgressAsn_exact",
         "match": {
-          "standard_metadata.egressPort": [2]
+          "meta.egressPort": [2]
         },
         "action_name": "MyIngress.setEgressAsn",
         "action_params": {
@@ -69,7 +69,7 @@
       {
         "table": "MyIngress.switchEgressAsn_exact",
         "match": {
-          "standard_metadata.egressPort": [3]
+          "meta.egressPort": [3]
         },
         "action_name": "MyIngress.setEgressAsn",
         "action_params": {
@@ -94,7 +94,7 @@
           "asn": 1,
           "port": 1,
           "dstAddr": "08:00:00:00:05:02",
-          "flags": 5
+          "flags": 4
         }
       },
       {
@@ -107,7 +107,7 @@
           "asn": 2,
           "port": 1,
           "dstAddr": "08:00:00:00:05:02",
-          "flags": 3
+          "flags": 2
         }
       },
       {
@@ -164,7 +164,7 @@
         "action_name": "MyIngress.getSrcAsn",
         "action_params": {
           "asn": 1,
-          "flags": 5
+          "flags": 4
         }
       },
       {
@@ -175,7 +175,7 @@
         "action_name": "MyIngress.getSrcAsn",
         "action_params": {
           "asn": 2,
-          "flags": 3
+          "flags": 2
         }
       },
       {

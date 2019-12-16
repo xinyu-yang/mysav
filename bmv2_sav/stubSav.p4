@@ -5,9 +5,6 @@
 #include "includes/parser.p4"
 #include "includes/indexKey.p4"
 
-
-register<time_t>(16) ctime;
-
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
@@ -31,6 +28,7 @@ control MyIngress(inout headers hdr,
     bit<48> tmp;
     time_t  cctime;
     indexKey() indexKeyInstance;
+    register<time_t>(1) ctime;
 
     action initiate() {
         meta.isSrcDeploy = false;
@@ -92,18 +90,25 @@ control MyIngress(inout headers hdr,
     action setLocalPrefix() {
         meta.isLocalPrefix = true;
     }
-    action getSrcAsn(asn_t asn, bit<8> deploy) {
+    //flags | | | | | |deployed|last|stub|
+    action getSrcAsn(asn_t asn, bit<8> flags) {
         meta.srcAsn = asn;
-        if (deploy != 0) {
+        if ((flags & 0x04) != 0) {
             meta.isSrcDeploy = true;
         }
+        if ((flags & 0x01) != 0) {
+            meta.isStub = true;
+        }
     }
-    action getDstAsn(asn_t asn, egressSpec_t port, macAddr_t dstAddr, bit<8> deploy) {
+    action getDstAsn(asn_t asn, egressSpec_t port, macAddr_t dstAddr, bit<8> flags) {
         meta.dstAsn = asn;
         meta.egressPort = port;
         meta.dstAddr = dstAddr;
-        if (deploy != 0) {
+        if ((flags & 0x04) != 0) {
             meta.isDstDeploy = true;
+        }
+        if ((flags & 0x02) != 0) {
+            meta.isLast = true;
         }
     }
     action getIndex(time_t time) {
@@ -111,7 +116,7 @@ control MyIngress(inout headers hdr,
         tmp = hdr.ip.v4.srcAddr ++ time;
         tmp = tmp ^ meta.key[4095:4048];
         hash(meta.index, HashAlgorithm.crc16, (bit<16>)0, {tmp}, (bit<16>)256);
-        meta.index = 4096 - meta.index*16;
+        meta.index = 256 - meta.index;
         // meta.MAC = meta.key[4095:4095-15]; //.................
     }
     action getKey(bit<4096> key) {
@@ -119,9 +124,14 @@ control MyIngress(inout headers hdr,
     }
     action setDstAsn(asn_t asn) {
         meta.dstAsn = asn;
-        meta.existMiddle = true;
+        if (asn != (asn_t)0)
+        {
+            meta.existMiddle = true;
+        }
     }
     action insertIpv4MAC() {
+        hdr.ip.v4.ihl = hdr.ip.v4.ihl + 2;
+        hdr.ip.v4.totalLen = hdr.ip.v4.totalLen + 8;
         hdr.ipv4Opt.setValid();
         hdr.ipv4Opt.type = IPV4OPT_TYPE;
         hdr.ipv4Opt.len = IPV4OPT_LEN;
@@ -133,6 +143,8 @@ control MyIngress(inout headers hdr,
     action verifyMAC() {
         if (meta.MAC == hdr.ipv4Opt.MAC) {
             meta.verified = true;
+            hdr.ip.v4.ihl = hdr.ip.v4.ihl - 2;
+            hdr.ip.v4.totalLen = hdr.ip.v4.totalLen - 8;
         }
     }
 
@@ -331,12 +343,12 @@ control MyIngress(inout headers hdr,
 
             AS2Key_exact.apply();
             ctime.read(cctime, 0);
-            if (meta.isInput == true && cctime - hdr.ipv4Opt.timestamp >= 2) {
-                drop();
-                exit;
-            }
             // get timesatamp depends on source address.
             if (meta.isInput == true) {
+                if (cctime - hdr.ipv4Opt.timestamp >= 2) {
+                    drop();
+                    exit;
+                }
                 getIndex(hdr.ipv4Opt.timestamp);
             }
             else if(meta.isOutput == true){
@@ -345,18 +357,18 @@ control MyIngress(inout headers hdr,
             // indexMAC
             indexKeyInstance.apply(meta);
     
-            if (meta.isInput == false) {
+            if (meta.isOutput == true) {
                 insertIpv4MAC();
                 ipv4_forward(meta.dstAddr);
             }
-            else {
+            else if(meta.isInput == true){
                 verifyMAC();
+                hdr.ipv4Opt.setInvalid();
                 if (meta.verified == false) {
                     drop();
                     exit;
                 }
                 else {
-                    hdr.ipv4Opt.setInvalid();
                     ipv4_forward(meta.dstAddr);
                 }
             }
@@ -380,10 +392,10 @@ control MyEgress(inout headers hdr,
 
 control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
      apply {
-	update_checksum(
-	    hdr.ip.v4.isValid(),
+             update_checksum(
+	        hdr.ip.v4.isValid() && hdr.ipv4Opt.isValid() == false,
             { hdr.ip.v4.version,
-	      hdr.ip.v4.ihl,
+	          hdr.ip.v4.ihl,
               hdr.ip.v4.diffserv,
               hdr.ip.v4.totalLen,
               hdr.ip.v4.identification,
@@ -395,6 +407,29 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
               hdr.ip.v4.dstAddr },
             hdr.ip.v4.hdrChecksum,
             HashAlgorithm.csum16);
+
+            update_checksum(
+	        hdr.ipv4Opt.isValid(),
+            { hdr.ip.v4.version,
+	          hdr.ip.v4.ihl,
+              hdr.ip.v4.diffserv,
+              hdr.ip.v4.totalLen,
+              hdr.ip.v4.identification,
+              hdr.ip.v4.flags,
+              hdr.ip.v4.fragOffset,
+              hdr.ip.v4.ttl,
+              hdr.ip.v4.protocol,
+              hdr.ip.v4.srcAddr,
+              hdr.ip.v4.dstAddr,
+              hdr.ipv4Opt.type,
+              hdr.ipv4Opt.len,
+              hdr.ipv4Opt.timestamp,
+              hdr.ipv4Opt.MAC,
+              hdr.ipv4Opt.nop,
+              hdr.ipv4Opt.eop},
+            hdr.ip.v4.hdrChecksum,
+            HashAlgorithm.csum16);
+
     }
 }
 
