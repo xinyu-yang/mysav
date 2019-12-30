@@ -87,16 +87,14 @@ class ExerciseTopo(Topo):
                         json_path=params["program"],
                         grpc_port=params["grpc_port"],
                         device_id=params["device_id"],
-                        log_console=True,
-                        pcap_dump=pcap_dir)
+                        log_console=False)
             elif "grpc_port" in params:
                 # add default switch
                 switchClass = configureP4Switch(
                         sw_path=bmv2_exe,
                         grpc_port=params["grpc_port"],
                         device_id=params["device_id"],
-                        log_console=True,
-                        pcap_dump=pcap_dir)
+                        log_console=False)
             self.addSwitch(sw, log_file="%s/%s.log" %(log_dir, sw), cls=switchClass)
 
         for link in host_links:
@@ -259,8 +257,7 @@ class ExerciseRunner:
         defaultSwitchClass = configureP4Switch(
                                 sw_path=self.bmv2_exe,
                                 json_path=self.switch_json,
-                                log_console=True,
-                                pcap_dump=self.pcap_dir)
+                                log_console=False)
 
         self.topo = ExerciseTopo(self.hosts, self.switches, self.links, self.log_dir, self.bmv2_exe, self.pcap_dir)
 

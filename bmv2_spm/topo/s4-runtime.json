@@ -1,0 +1,277 @@
+{
+  "target": "bmv2",
+  "p4info": "build/stubSav.p4.p4info.txt",
+  "bmv2_json": "build/stubSav.json",
+  "table_entries": [
+    {
+      "table": "MyIngress.switchIngressAsn_exact",
+      "default_action": true,
+      "action_name": "NoAction",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.switchIngressAsn_exact",
+      "match": {
+        "standard_metadata.ingress_port": [1]
+      },
+      "action_name": "MyIngress.setIngressAsn",
+      "action_params": {
+        "asn": 6
+      }
+    },
+    {
+      "table": "MyIngress.switchIngressAsn_exact",
+      "match": {
+        "standard_metadata.ingress_port": [2]
+      },
+      "action_name": "MyIngress.setIngressAsn",
+      "action_params": {
+        "asn": 0
+      }
+    },
+
+    {
+      "table": "MyIngress.switchEgressAsn_exact",
+      "default_action": true,
+      "action_name": "NoAction",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.switchEgressAsn_exact",
+      "match": {
+        "meta.egressPort": [1]
+      },
+      "action_name": "MyIngress.setEgressAsn",
+      "action_params": {
+        "asn": 6
+      }
+    },
+    {
+      "table": "MyIngress.switchEgressAsn_exact",
+      "match": {
+        "meta.egressPort": [2]
+      },
+      "action_name": "MyIngress.setEgressAsn",
+      "action_params": {
+        "asn": 0
+      }
+    },
+
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "default_action": true,
+      "action_name": "MyIngress.drop",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["44.44.1.1", 32]
+      },
+      "action_name": "MyIngress.getDstAsn",
+      "action_params": {
+        "asn": 0,
+        "port": 2,
+        "dstAddr": "08:00:00:44:44:44",
+        "flags": 0
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["22.22.0.0", 16]
+      },
+      "action_name": "MyIngress.getDstAsn",
+      "action_params": {
+        "asn": 2,
+        "port": 1,
+        "dstAddr": "08:00:00:00:06:03",
+        "flags": 1
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["33.33.0.0", 16]
+      },
+      "action_name": "MyIngress.getDstAsn",
+      "action_params": {
+        "asn": 3,
+        "port": 1,
+        "dstAddr": "08:00:00:00:06:03",
+        "flags": 1
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["11.11.0.0", 16]
+      },
+      "action_name": "MyIngress.getDstAsn",
+      "action_params": {
+        "asn": 1,
+        "port": 1,
+        "dstAddr": "08:00:00:00:06:03",
+        "flags": 5
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["55.55.0.0", 16]
+      },
+      "action_name": "MyIngress.getDstAsn",
+      "action_params": {
+        "asn": 5,
+        "port": 1,
+        "dstAddr": "08:00:00:00:06:03",
+        "flags": 0
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Dst2AS_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["66.66.0.0", 16]
+      },
+      "action_name": "MyIngress.getDstAsn",
+      "action_params": {
+        "asn": 6,
+        "port": 1,
+        "dstAddr": "08:00:00:00:06:03",
+        "flags": 4
+      }
+    },
+
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "default_action": true,
+      "action_name": "MyIngress.drop",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["11.11.0.0", 16]
+      },
+      "action_name": "MyIngress.getSrcAsn",
+      "action_params": {
+        "asn": 1,
+        "flags": 5
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["22.22.0.0", 16]
+      },
+      "action_name": "MyIngress.getSrcAsn",
+      "action_params": {
+        "asn": 2,
+        "flags": 1
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["33.33.0.0", 16]
+      },
+      "action_name": "MyIngress.getSrcAsn",
+      "action_params": {
+        "asn": 3,
+        "flags": 1
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["44.44.1.1", 32]
+      },
+      "action_name": "MyIngress.getSrcAsn",
+      "action_params": {
+        "asn": 0,
+        "flags": 0
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["55.55.0.0", 16]
+      },
+      "action_name": "MyIngress.getSrcAsn",
+      "action_params": {
+        "asn": 5,
+        "flags": 0
+      }
+    },
+    {
+      "table": "MyIngress.ipv4Src2AS_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["66.66.0.0", 16]
+      },
+      "action_name": "MyIngress.getSrcAsn",
+      "action_params": {
+        "asn": 6,
+        "flags": 4
+      }
+    },
+
+    {
+      "table": "MyIngress.thisSrcPrefix_lpm",
+      "default_action": true,
+      "action_name": "NoAction",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.thisSrcPrefix_lpm",
+      "match": {
+        "hdr.ip.v4.srcAddr": ["44.44.0.0", 16]
+      },
+      "action_name": "MyIngress.setThisSrcPrefix",
+      "action_params": {
+      }
+    },
+
+    {
+      "table": "MyIngress.thisDstPrefix_lpm",
+      "default_action": true,
+      "action_name": "NoAction",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.thisDstPrefix_lpm",
+      "match": {
+        "hdr.ip.v4.dstAddr": ["44.44.0.0", 16]
+      },
+      "action_name": "MyIngress.setThisDstPrefix",
+      "action_params": {
+      }
+    },
+
+    {
+      "table": "MyIngress.AS2Key_exact",
+      "default_action": true,
+      "action_name": "NoAction",
+      "action_params": { }
+    },
+    {
+      "table": "MyIngress.AS2Key_exact",
+      "match": {
+        "meta.asn": [1]
+      },
+      "action_name": "MyIngress.getKey",
+      "action_params": {
+        "key": "c645"
+      }
+    },
+    {
+      "table": "MyIngress.AS2Key_exact",
+      "match": {
+        "meta.asn": [6]
+      },
+      "action_name": "MyIngress.getKey",
+      "action_params": {
+        "key": "c953"
+      }
+    }
+  ]
+}

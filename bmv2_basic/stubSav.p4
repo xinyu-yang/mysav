@@ -27,7 +27,7 @@ control MyIngress(inout headers hdr,
     // initiate state variable
     bit<48> tmp;
     // time_t  meta.timestamp;
-    indexKey() indexKeyInstance;
+    // indexKey() indexKeyInstance;
     // register<time_t>(1) ctime;
 
     action initiate() {
@@ -111,19 +111,13 @@ control MyIngress(inout headers hdr,
             meta.isLast = true;
         }
     }
+
     action getTime(time_t time) {
         meta.timestamp = time;
     }
 
-    action getIndex(time_t time) {
-        tmp = hdr.ip.v4.srcAddr ++ time;
-        tmp = tmp ^ meta.key[4095:4048];
-        hash(meta.index, HashAlgorithm.crc16, (bit<16>)0, {tmp}, (bit<16>)256);
-        meta.index = 256 - meta.index;
-        // meta.MAC = meta.key[4095:4095-15]; //.................
-    }
-    action getKey(bit<4096> key) {
-        meta.key = key;
+    action getKey(bit<16> key) {
+        meta.MAC = key;
     }
     action setDstAsn(asn_t asn) {
         meta.dstAsn = asn;
@@ -133,23 +127,15 @@ control MyIngress(inout headers hdr,
         }
     }
     action insertIpv4MAC() {
-        hdr.ip.v4.ihl = hdr.ip.v4.ihl + 2;
-        hdr.ip.v4.totalLen = hdr.ip.v4.totalLen + 8;
-        hdr.ipv4Opt.setValid();
-        hdr.ipv4Opt.type = IPV4OPT_TYPE;
-        hdr.ipv4Opt.len = IPV4OPT_LEN;
-        hdr.ipv4Opt.timestamp = meta.timestamp;
-        hdr.ipv4Opt.MAC = meta.MAC;
-        hdr.ipv4Opt.nop = NOP;
-        hdr.ipv4Opt.eop = EOP;
+        hdr.ip.v4.identification = meta.MAC;
     }
+    
     action verifyMAC() {
-        if (meta.MAC == hdr.ipv4Opt.MAC) {
+        if (meta.MAC == hdr.ip.v4.identification) {
             meta.verified = true;
-            hdr.ip.v4.ihl = hdr.ip.v4.ihl - 2;
-            hdr.ip.v4.totalLen = hdr.ip.v4.totalLen - 8;
         }
     }
+
 
     action setIngressAsn(bit<32> asn) {
         meta.ingressAsn = asn;
@@ -346,33 +332,14 @@ control MyIngress(inout headers hdr,
                     exit;
                 }
                 if (meta.isDstDeploy == false) {
-                    lastAS2Dst.apply();
-                    if (meta.existMiddle == false) {
-                        ipv4_forward(meta.dstAddr);
-                        exit;
-                    }
+                    ipv4_forward(meta.dstAddr);
+                    exit;
                 }
                 // insert MAC.
                 meta.asn = meta.dstAsn;
             }
 
             AS2Key_exact.apply();
-            getTime_lpm.apply();
-            // ctime.read(meta.timestamp, 0);
-            // get timesatamp depends on source address.
-            if (meta.isInput == true) {
-                if (meta.timestamp - hdr.ipv4Opt.timestamp >= 2 
-                || meta.timestamp < hdr.ipv4Opt.timestamp) {
-                    drop();
-                    exit;
-                }
-                getIndex(hdr.ipv4Opt.timestamp);
-            }
-            else if(meta.isOutput == true){
-                getIndex(meta.timestamp);
-            }
-            // indexMAC
-            indexKeyInstance.apply(meta);
     
             if (meta.isOutput == true) {
                 insertIpv4MAC();
@@ -380,7 +347,6 @@ control MyIngress(inout headers hdr,
             }
             else if(meta.isInput == true){
                 verifyMAC();
-                hdr.ipv4Opt.setInvalid();
                 if (meta.verified == false) {
                     drop();
                     exit;
@@ -410,7 +376,7 @@ control MyEgress(inout headers hdr,
 control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
      apply {
              update_checksum(
-	        hdr.ip.v4.isValid() && hdr.ipv4Opt.isValid() == false,
+	        hdr.ip.v4.isValid(),
             { hdr.ip.v4.version,
 	          hdr.ip.v4.ihl,
               hdr.ip.v4.diffserv,
@@ -425,28 +391,6 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
             hdr.ip.v4.hdrChecksum,
             HashAlgorithm.csum16);
 
-            update_checksum(
-	        hdr.ipv4Opt.isValid(),
-            { hdr.ip.v4.version,
-	          hdr.ip.v4.ihl,
-              hdr.ip.v4.diffserv,
-              hdr.ip.v4.totalLen,
-              hdr.ip.v4.identification,
-              hdr.ip.v4.flags,
-              hdr.ip.v4.fragOffset,
-              hdr.ip.v4.ttl,
-              hdr.ip.v4.protocol,
-              hdr.ip.v4.srcAddr,
-              hdr.ip.v4.dstAddr,
-              hdr.ipv4Opt.type,
-              hdr.ipv4Opt.len,
-              hdr.ipv4Opt.timestamp,
-              hdr.ipv4Opt.MAC,
-              hdr.ipv4Opt.nop,
-              hdr.ipv4Opt.eop},
-            hdr.ip.v4.hdrChecksum,
-            HashAlgorithm.csum16);
-
     }
 }
 
@@ -458,9 +402,6 @@ control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ip.v4);
-        packet.emit(hdr.ipv4Opt);
-        packet.emit(hdr.ipv6Oth);
-        packet.emit(hdr.ipv6Dst);
     }
 }
 

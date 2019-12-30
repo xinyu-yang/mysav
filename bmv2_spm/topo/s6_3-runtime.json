@@ -4,23 +4,6 @@
     "bmv2_json": "build/tranSav.json",
     "table_entries": [
       {
-        "table": "MyIngress.getTime_lpm",
-        "default_action": true,
-        "action_name": "drop",
-        "action_params": { }
-      },
-      {
-        "table": "MyIngress.getTime_lpm",
-        "match": {
-          "hdr.ip.v4.version": [0, 1]
-        },
-        "action_name": "MyIngress.getTime",
-        "action_params": {
-          "time": 0
-        }
-      },
-
-      {
         "table": "MyIngress.switchIngressAsn_exact",
         "default_action": true,
         "action_name": "NoAction",
@@ -43,7 +26,7 @@
         },
         "action_name": "MyIngress.setIngressAsn",
         "action_params": {
-          "asn": 3
+          "asn": 0
         }
       },
       {
@@ -53,7 +36,7 @@
         },
         "action_name": "MyIngress.setIngressAsn",
         "action_params": {
-          "asn": 0
+          "asn": 4
         }
       },
 
@@ -80,7 +63,7 @@
         },
         "action_name": "MyIngress.setEgressAsn",
         "action_params": {
-          "asn": 3
+          "asn": 0
         }
       },
       {
@@ -90,7 +73,7 @@
         },
         "action_name": "MyIngress.setEgressAsn",
         "action_params": {
-          "asn": 0
+          "asn": 4
         }
       },
       
@@ -136,7 +119,7 @@
         "action_params": {
           "asn": 3,
           "port": 2,
-          "dstAddr": "08:00:00:00:03:01",
+          "dstAddr": "08:00:00:00:06:02",
           "flags": 3
         }
       },
@@ -149,7 +132,7 @@
         "action_params": {
           "asn": 4,
           "port": 3,
-          "dstAddr": "08:00:00:00:06:03",
+          "dstAddr": "08:00:00:00:04:01",
           "flags": 5
         }
       },
@@ -274,7 +257,7 @@
         },
         "action_name": "MyIngress.getKey",
         "action_params": {
-          "key": "a86e4021161a28ef7669924f5a571e21c132e79fc3380610f5ae329981aed135c99f7d041875e611eb66cf93e937be08b0988fab82103d2079ba6b9e2c570a32434a2d4b750a90dd2c23a5d7561e7e9b7fc32153572587ec5d9f619d4f44c6e449d682bd93b969ffd42be34db64cb7fcaabbdffc86a05a0d3964c1b211a10586c6898f7a67ca471af8b309dcbc023566684a144c880aa52b6fcb18fb4e04ab3766a1c505839a16a3a135909f248d2478bdf76dce8eb3c6b1de35eaac122ad00c0c4d9fd0b13e7213123a062f048609df335e135b3cc389657daeb7b99cf2aa8c8e145b76cc87b54d6adac45c87473c2d1670600edba3552efea84029e4966bc9e6c0c5268e340cb6796fdfa1e855416e65058cfa122cb35c4c08e3a1313bbf75f0a351ad09eb353f4e11a9745f232a179661bc32034d190a707454e57647655ae5698cfe7115dda77741400e0776d2bce2d986274604e3c16464137ba37f4c41e40a57f5d531fc1d53dfd1acfc59453300206c506992be84c2c3944443e6360f411494ac308f979f04e63bc259b53efcc0e5a1794b6d39cdba92dca55b6406feb7debfc3159e4c3b4456360049a38092466ff4b55af17f64a7469bb7605f3e325621f99582a4993d0501e1abff4a6426279150ec1d27d098fbe6c9692858ba98964afaac785e13b31eff86e943396475b476c71d323b9c353096a7f70c34b805"
+          "key": "a86e"
         }
       },
       {
@@ -284,44 +267,7 @@
         },
         "action_name": "MyIngress.getKey",
         "action_params": {
-          "key": "c9531f019c762426daf6e51d81131c5cc2cf00aa44ed0e676338aa46d29cf96153090cdf7e5211186d797be7bb4c9bcd97c22940831310ad449296b91fc1c1a2633574da53c60f15423b6361b828cb4fdccee10e9453adc46d284f0ed308244ee4d116ac731808d23e5c36fd73933eadc3e026ad535b78ac681c2daee30167cf9baca9c56f661c746b5040fb17c04392b8c41885da5c5de7a131c00469f688ce8613719252ed3e1612ce7b32c61a02e652426c96a861ca8e3d6727cb009723fca95e7bce8d0b1a946b29388a65bd7d3173bd6ac39515007e42bf34cf19a990ea89d8d34bf2ff8f44c97d513768af12588fdfcd229732a02fddfb82f405258f55366f46732332d30436d982dcbce720c0bab217a79235a845c7c8bfecec1a91e1635bd689c1c444f4fe84e8c951614f2cf747662c63f1c1c665147e371ee76d4f72dd73020222ffce6936386d7b5be96f37cc0043ec9049b24e6425f41912a4ec63b930b3ff437fae541f0321c36e4355a2afbb05536bd694eae74a76cc46182d86d8120c44e8e23acd692d647876ef14d4031f9f078a2fbe1d98665842952f9b766639cb30f1c1d232ed3c2df679dc3dde8e31d7577b980c45ba3b99c8a642c69f718b8066e25b38848ebd6f7c71169c57a24a3bf2d5fd36178cc5b8dc9c22534311f3422713fea55a3e047664e8d02af980792e6e308b1eae26c98d705a1325"
-        }
-      },
-
-      {
-        "table": "MyIngress.lastAS2Dst",
-        "default_action": true,
-        "action_name": "NoAction",
-        "action_params": { }
-      },
-      {
-        "table": "MyIngress.lastAS2Dst",
-        "match": {
-          "meta.dstAsn": [2]
-        },
-        "action_name": "MyIngress.setDstAsn",
-        "action_params": {
-          "asn": 0
-        }
-      },
-      {
-        "table": "MyIngress.lastAS2Dst",
-        "match": {
-          "meta.dstAsn": [3]
-        },
-        "action_name": "MyIngress.setDstAsn",
-        "action_params": {
-          "asn": 0
-        }
-      },
-      {
-        "table": "MyIngress.lastAS2Dst",
-        "match": {
-          "meta.dstAsn": [5]
-        },
-        "action_name": "MyIngress.setDstAsn",
-        "action_params": {
-          "asn": 0
+          "key": "c953"
         }
       }
     ]

@@ -5,9 +5,6 @@
 #include "includes/parser.p4"
 #include "includes/indexKey.p4"
 
-
-register<time_t>(16) ctime;
-
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
@@ -29,8 +26,9 @@ control MyIngress(inout headers hdr,
     //counter(MAX_TUNNEL_ID, CounterType.packets_and_bytes) egressTunnelCounter;
     // initiate state variable
     bit<48> tmp;
-    time_t  cctime;
+    // time_t  meta.timestamp;
     indexKey() indexKeyInstance;
+    // register<time_t>(1) ctime;
 
     action initiate() {
         meta.isSrcDeploy = false;
@@ -114,14 +112,19 @@ control MyIngress(inout headers hdr,
             meta.isLast = true;
         }
     }
-    action getIndex(time_t time) {
+
+    action getTime(time_t time) {
         meta.timestamp = time;
+    }
+
+    action getIndex(time_t time) {
         tmp = hdr.ip.v4.srcAddr ++ time;
         tmp = tmp ^ meta.key[4095:4048];
         hash(meta.index, HashAlgorithm.crc16, (bit<16>)0, {tmp}, (bit<16>)256);
         meta.index = 256 - meta.index;
         // meta.MAC = meta.key[4095:4095-15]; //.................
     }
+
     action getKey(bit<4096> key) {
         meta.key = key;
     }
@@ -157,6 +160,18 @@ control MyIngress(inout headers hdr,
 
     action setEgressAsn(bit<32> asn) {
         meta.egressAsn = asn;
+    }
+
+    table getTime_lpm {
+        key = {
+            hdr.ip.v4.version: lpm;
+        }
+        actions = {
+            getTime;
+            drop;
+        }
+        size = 2;
+        default_action = drop;
     }
 
     // Judge packets come from inner or Outer. 
@@ -339,17 +354,21 @@ control MyIngress(inout headers hdr,
             }
 
             AS2Key_exact.apply();
-            ctime.read(cctime, 0);
-            if (meta.isInput == true && cctime - hdr.ipv4Opt.timestamp >= 2) {
-                drop();
-                exit;
+            getTime_lpm.apply();
+            // ctime.read(meta.timestamp, 0);
+            if (meta.isInput == true) {
+                if (meta.timestamp - hdr.ipv4Opt.timestamp >= 2 
+                || meta.timestamp < hdr.ipv4Opt.timestamp) {
+                    drop();
+                    exit;
+                }
             }
             // get timesatamp depends on source address.
             if (meta.isInput == true) {
                 getIndex(hdr.ipv4Opt.timestamp);
             }
             else if(meta.isOutput == true){
-                getIndex(cctime);
+                getIndex(meta.timestamp);
             }
             // indexMAC
             indexKeyInstance.apply(meta);

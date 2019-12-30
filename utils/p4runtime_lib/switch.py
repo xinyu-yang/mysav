@@ -20,6 +20,7 @@ import grpc
 from p4.v1 import p4runtime_pb2
 from p4.v1 import p4runtime_pb2_grpc
 from p4.tmp import p4config_pb2
+from error_utils import printGrpcError
 
 MSG_LOG_MAX_LEN = 1024
 
@@ -83,14 +84,14 @@ class SwitchConnection(object):
         if dry_run:
             print "P4Runtime SetForwardingPipelineConfig:", request
         else:
-            self.client_stub.SetForwardingPipelineConfig(request)
+            res = self.client_stub.SetForwardingPipelineConfig(request)
 
-    def WriteTableEntry(self, table_entry, dry_run=False):
+    def WriteTableEntry(self, table_entry, dry_run=False, modify=False):
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
         request.election_id.low = 1
         update = request.updates.add()
-        if table_entry.is_default_action:
+        if table_entry.is_default_action or modify:
             update.type = p4runtime_pb2.Update.MODIFY
         else:
             update.type = p4runtime_pb2.Update.INSERT
@@ -98,7 +99,10 @@ class SwitchConnection(object):
         if dry_run:
             print "P4Runtime Write:", request
         else:
-            self.client_stub.Write(request)
+            try:
+                self.client_stub.Write(request)
+            except grpc.RpcError as e:
+                printGrpcError(e) 
 
     def ReadTableEntries(self, table_id=None, dry_run=False):
         request = p4runtime_pb2.ReadRequest()
